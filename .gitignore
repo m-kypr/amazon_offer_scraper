@@ -1,0 +1,5 @@
+env
+.vscode
+geckodriver.exe
+products.json
+geckodriver.log
