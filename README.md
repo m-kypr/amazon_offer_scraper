@@ -1,6 +1,6 @@
 # Amazon_scraper.py
 
-Requires geckodriver (engine of Firefox): Download it from [here](https://github.com/mozilla/geckodriver/releases)
+Requires [geckodriver](https://github.com/mozilla/geckodriver/releases)
 
 If you are under ...
 
