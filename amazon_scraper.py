@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import locale
@@ -18,6 +19,15 @@ PARSER = 'lxml'
 # ------ FOR USERS: DONT TOUCH ANYTHING BELOW THIS LINE -----
 
 
+def makedir(dirname):
+    dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), dirname)
+    try:
+        os.mkdir(dir)
+    except FileExistsError as e:
+        pass
+    return dir
+
+
 def scroll_shim(passed_in_driver, object):
     x = object.location['x']
     y = object.location['y']
@@ -31,10 +41,13 @@ def scroll_shim(passed_in_driver, object):
 
 
 print("What product do you want?")
+inp = None
 if DEBUG:
     inp = input(":") or 'gaming'
 while not inp:
     inp = input(':')
+
+PRODUCTS_DIR = makedir('products')
 
 START_TIME = time.time()
 
@@ -88,11 +101,13 @@ for i in range(1, PAGES+1):
                 price = locale.atof(price.text.replace('€', '').strip())
                 dealprice = locale.atof(
                     dealprice.text.replace('€', '').strip())
+                save = (price-dealprice)/price
                 products.append({
                     'link': product_url,
                     'price': price,
                     'deal_price': dealprice,
-                    'save': (price-dealprice)/price
+                    'save': save,
+                    'p2s': dealprice/save
                 })
             else:
                 if DEBUG:
@@ -101,11 +116,17 @@ for i in range(1, PAGES+1):
 
 driver.close()
 
-products = sorted(products, key=lambda k: k['save'])
+products_save = sorted(products, key=lambda k: k['save'])
+products_price = sorted(products, key=lambda k: k['deal_price'])
+products_p2s = sorted(products, key=lambda k: k['p2s'])
 
-print(f"num of products: {len(products)}")
-print(f"best offer: {products[-1]}")
+if DEBUG:
+    print(f"num of products: {len(products)}")
+print(f"best offer: {products_save[-1]['link']}")
+price(f"cheapest: {products_price[-1]['link']}")
+price(f"p2s: {products_p2s[-1]['link']}")
 
-open('products.json', 'w+').write(json.dumps(products))
+open(f'{os.path.join(PRODUCTS_DIR, "_".join(inp.split(" ")))}.json',
+     'w+').write(json.dumps(products_save))
 
 print(f"time elapsed: {time.time()-START_TIME}s")
