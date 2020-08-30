@@ -7,10 +7,14 @@ import bs4
 from selenium.webdriver import Firefox, FirefoxOptions
 from selenium.webdriver.common.action_chains import ActionChains
 
-PAGES = 10
+PAGES = 5
 AMAZON_URL = 'https://www.amazon.de'
 LOCALE = 'de_DE.UTF-8'
 ONLY_OFFERS = True
+
+
+# ------ FOR USERS: ONLY TOUCH WHEN YOU KNOW WHAT YOU ARE DOING -----
+
 
 HEADLESS = True
 DEBUG = False
@@ -55,7 +59,10 @@ query = "+".join(inp.split(" "))
 
 options = FirefoxOptions()
 options.headless = HEADLESS
-driver = Firefox(options=options)
+if DEBUG:
+    driver = Firefox(options=options)
+else:
+    driver = Firefox(options=options, service_log_path=os.path.devnull)
 locale.setlocale(locale.LC_ALL, LOCALE)
 query_url = f"{AMAZON_URL}/s?k={query}"
 
@@ -64,6 +71,8 @@ products = []
 if ONLY_OFFERS:
     offers_tag = ''
 for i in range(1, PAGES+1):
+    if not DEBUG:
+        print('.', end='', flush=True)
     url = f'{query_url}&page={i}'
     if ONLY_OFFERS:
         if i == 1:
@@ -107,7 +116,7 @@ for i in range(1, PAGES+1):
                     'price': price,
                     'deal_price': dealprice,
                     'save': save,
-                    'p2s': dealprice/save
+                    'p2s': save/dealprice
                 })
             else:
                 if DEBUG:
@@ -116,17 +125,24 @@ for i in range(1, PAGES+1):
 
 driver.close()
 
+open(f'{os.path.join(PRODUCTS_DIR, "_".join(inp.split(" ")).strip())}.json',
+     'w+').write(json.dumps(products))
+
+if not DEBUG:
+    print(flush=True)
+
 products_save = sorted(products, key=lambda k: k['save'])
+print(products_save[-1]['link'])
 products_price = sorted(products, key=lambda k: k['deal_price'])
+print(products_price[0]['link'])
 products_p2s = sorted(products, key=lambda k: k['p2s'])
+print(products_p2s[-1]['link'])
 
-if DEBUG:
-    print(f"num of products: {len(products)}")
-print(f"best offer: {products_save[-1]['link']}")
-price(f"cheapest: {products_price[-1]['link']}")
-price(f"p2s: {products_p2s[-1]['link']}")
 
-open(f'{os.path.join(PRODUCTS_DIR, "_".join(inp.split(" ")))}.json',
-     'w+').write(json.dumps(products_save))
+# if DEBUG:
+#     print(f"num of products: {len(products)}")
+# print(f"best offer: {products_save[-1]}")
+# price(f"cheapest: {products_price[-1]}")
+# price(f"p2s: {products_p2s[-1]}")
 
 print(f"time elapsed: {time.time()-START_TIME}s")

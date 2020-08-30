@@ -1,5 +1,5 @@
-env
-.vscode
+env/
+.vscode/
+products/
 geckodriver.exe
-products
 geckodriver.log
